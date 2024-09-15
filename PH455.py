@@ -4,10 +4,11 @@
 # You will probably need to use some of the functions in this file
 # but you do not need to understand the source code. 
 #
+# Elmar Haller, Glasgow 2022
 #*************************************************************
 import numpy as np
 import matplotlib.pyplot as plt
-
+import matplotlib.animation
 
 #***************************************************
 # Print version of this file
@@ -16,8 +17,10 @@ import matplotlib.pyplot as plt
 #***************************************************
 def version():
     ver  = "0.3"
-    date = "06/10/2024"    
+    date = "27/09/2023"    
     print("Version: %s \nDate: %s"% (ver,date))
+    
+
 
 
 #***************************************************
@@ -178,6 +181,44 @@ def showBeam( zVect, bVect, lam):
        
     plt.xlabel('z-direction (mm)')
     plt.ylabel('x-position (mm)')
+
+
+#***************************************************
+# Show phasor diagram
+#***************************************************
+def showPhasor(sumU, phiVect, M):
+
+    # store the real and imaginary compoenents of the calculated sumU values
+    URealVect = [0]
+    UImagVect = [0]
+
+    fig, ax = plt.subplots()
+        
+    for idx in range(M):
+        # calculate U for phi, M values
+        Us = sumU(idx,phiVect)
+        URealVect.append(np.real(Us))
+        UImagVect.append(np.imag(Us))
+        
+    # plotting stuff for MVect
+    for idx in range(M):
+        plt.plot(URealVect[:(idx+1)],UImagVect[:(idx+1)],'b-')           # plot blue line
+        plt.plot(URealVect[idx],UImagVect[idx],'ro')   # plot red dot for last value        
+
+    # get max values for axis limits 
+    RealMax = np.max(URealVect)
+    RealMax = RealMax + RealMax * 0.1
+    ImagMax = np.max(UImagVect)
+    ImagMax = ImagMax + ImagMax * 0.1
+    ImagMin = np.min(UImagVect)
+    ImagMin = ImagMin - ImagMax * 0.1
+    plt.xlim([-RealMax, RealMax])               # fix axis limits
+    plt.ylim([ImagMin, ImagMax])
+
+    # title with phi value
+    plt.title( 'M={:.1f}, phi={:.2f}pi'.format(M,phiVect/np.pi) )
+    plt.xlabel('real(U)')                       # labels  
+    plt.ylabel('imag(U)')
 
 
 #***************************************************
