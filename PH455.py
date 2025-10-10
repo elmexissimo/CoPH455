@@ -8,7 +8,7 @@
 #*************************************************************
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.animation
+
 
 #***************************************************
 # Print version of this file
@@ -131,7 +131,10 @@ def showBeam( zVect, bVect, lam):
         # get angles for circle
         #print(W)
         #print(r)
-        theta = np.abs(np.arcsin(W/r))
+        ddd = W / r
+        ddd = np.clip(ddd, -1.0, 1.0)   # force into [-1,1]
+        theta = np.abs(np.arcsin(ddd))
+        #theta = np.abs(np.arcsin(W/r))
         angleVect = np.linspace(-theta, theta, 501 )        
         dz = r * np.cos(theta)
         
@@ -186,25 +189,40 @@ def showBeam( zVect, bVect, lam):
 #***************************************************
 # Show phasor diagram
 #***************************************************
-def showPhasor(sumU, phiVect, M):
-
+#def showPhasor(UVect, ax, phi, M):
+def showPhasor(sumU, phiVect, MVect):
+    
     # store the real and imaginary compoenents of the calculated sumU values
     URealVect = [0]
     UImagVect = [0]
 
+    # plot phi or M on x-axis
+    PlotType = 0    
+    if isinstance(MVect, np.ndarray) and not isinstance(phiVect, np.ndarray):
+        PlotType = 1
+    if isinstance(phiVect, np.ndarray) and not isinstance(MVect, np.ndarray):
+        PlotType = 2
+    if PlotType == 0:
+        print("Wrong arguments for showPhasor function. Either phi or M must be a numpy array (exclusive).")
+        return
+
+    # just for plotting
+    plt.close('all') 
     fig, ax = plt.subplots()
         
-    for idx in range(M):
-        # calculate U for phi, M values
-        Us = sumU(idx,phiVect)
-        URealVect.append(np.real(Us))
-        UImagVect.append(np.imag(Us))
+    if PlotType==1:
+        for M in MVect:
+            # calculate U for phi, M values
+            Us = sumU(M,phiVect)
+            URealVect.append(np.real(Us))
+            UImagVect.append(np.imag(Us))
+    else:
+        for phi in phiVect:
+            # calculate U for phi, M values
+            Us = sumU(MVect,phi)
+            URealVect.append(np.real(Us))
+            UImagVect.append(np.imag(Us))
         
-    # plotting stuff for MVect
-    for idx in range(M):
-        plt.plot(URealVect[:(idx+1)],UImagVect[:(idx+1)],'b-')           # plot blue line
-        plt.plot(URealVect[idx],UImagVect[idx],'ro')   # plot red dot for last value        
-
     # get max values for axis limits 
     RealMax = np.max(URealVect)
     RealMax = RealMax + RealMax * 0.1
@@ -212,13 +230,40 @@ def showPhasor(sumU, phiVect, M):
     ImagMax = ImagMax + ImagMax * 0.1
     ImagMin = np.min(UImagVect)
     ImagMin = ImagMin - ImagMax * 0.1
-    plt.xlim([-RealMax, RealMax])               # fix axis limits
-    plt.ylim([ImagMin, ImagMax])
 
-    # title with phi value
-    plt.title( 'M={:.1f}, phi={:.2f}pi'.format(M,phiVect/np.pi) )
-    plt.xlabel('real(U)')                       # labels  
-    plt.ylabel('imag(U)')
+    #ax.clear()                                  # clear axis
+    #plt.xlim([-RealMax, RealMax])               # fix axis limits
+    #plt.ylim([ImagMin, ImagMax])
+    
+    # plotting stuff for MVect
+    if PlotType==1:
+        for idx,M in enumerate(MVect):    
+            ax.clear()                                  # clear axis
+            plt.xlim([-RealMax, RealMax])               # fix axis limits
+            plt.ylim([ImagMin, ImagMax])
+            
+            ax.plot(URealVect[:(idx+1)],UImagVect[:(idx+1)],'b-')           # plot blue line
+            ax.plot(URealVect[idx],UImagVect[idx],'ro')   # plot red dot for last value        
+        
+            # title with phi value
+            plt.title( 'M={:.1f}, phi={:.2f}pi'.format(M,phiVect/np.pi) )
+            plt.xlabel('real(U)')                       # labels  
+            plt.ylabel('imag(U)')
+            plt.pause(0.2)                              # slow the plotting down
+    else:
+        for idx,phi in enumerate(phiVect):    
+            ax.clear()                                  # clear axis
+            plt.xlim([-RealMax, RealMax])               # fix axis limits
+            plt.ylim([ImagMin, ImagMax])
+            
+            ax.plot(URealVect[:(idx+1)],UImagVect[:(idx+1)],'b-')           # plot blue line
+            ax.plot(URealVect[idx],UImagVect[idx],'ro')   # plot red dot for last value        
+        
+            # title with phi value
+            plt.title( 'phi={:.2f}pi, M={:.1f}'.format(phi/np.pi,MVect) )
+            plt.xlabel('real(U)')                       # labels  
+            plt.ylabel('imag(U)')
+            plt.pause(0.2)                              # slow the plotting down
 
 
 #***************************************************
